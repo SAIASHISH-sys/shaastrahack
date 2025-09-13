@@ -16,7 +16,7 @@ import json
 # --- PDF & Tesseract Setup ---
 
 # PDF path (CLI override)
-file_path = sys.argv[1] if len(sys.argv) > 1 else "WhatsApp Image 2025-09-13 at 9.19.pdf"
+file_path = sys.argv[1] if len(sys.argv) > 1 else "Screenshot from 2025-09-13 21-17-20.pdf"
 if not os.path.isabs(file_path):
     file_path = os.path.abspath(file_path)
 
