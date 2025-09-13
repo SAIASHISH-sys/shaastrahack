@@ -1,8 +1,9 @@
-#!/usr/bin/env python3
+
 """
 OCR PDF Text Extraction Script
 Extracts text elements from PDF and outputs as JSON
 """
+
 
 import cv2
 import pytesseract
@@ -12,13 +13,25 @@ import os
 import sys
 import shutil
 import json
+from PIL import Image
 
 # --- PDF & Tesseract Setup ---
 
-# PDF path (CLI override)
-file_path = sys.argv[1] if len(sys.argv) > 1 else "Screenshot from 2025-09-13 21-17-20.pdf"
+
+# PDF or image path (CLI override)
+file_path = sys.argv[1] if len(sys.argv) > 1 else "WhatsApp Image 2025-09-13 at 9.19.43 PM.jpeg"
 if not os.path.isabs(file_path):
     file_path = os.path.abspath(file_path)
+
+# If input is a JPG/JPEG/PNG, convert to PDF
+img_exts = [".jpg", ".jpeg", ".png"]
+root, ext = os.path.splitext(file_path)
+if ext.lower() in img_exts:
+    img = Image.open(file_path)
+    pdf_path = root + ".pdf"
+    img.convert("RGB").save(pdf_path, "PDF", resolution=100.0)
+    print(f"Converted image {file_path} to PDF: {pdf_path}")
+    file_path = pdf_path
 
 # Tesseract detection / override
 if os.name == "nt":
@@ -50,6 +63,7 @@ try:
 except Exception as e:
     print(f"Error opening PDF file: {e}")
     print("Please make sure the file path is correct.")
+
     sys.exit(1)
 
 # Process first page (can be extended for multiple pages)
@@ -62,11 +76,37 @@ rgb_img_for_ocr = cv2.cvtColor(base_img, cv2.COLOR_BGR2RGB)
 # Perform OCR and get detailed word data
 word_data = pytesseract.image_to_data(rgb_img_for_ocr, output_type=pytesseract.Output.DICT)
 
-# Process and structure the OCR results
-pdf_elements = []
+
+# Create final JSON structure
+sample_object = {
+    "page number": {  # page number
+        "block number": {  # block number
+            "paragraph number": {  # paragraph number
+                "line number": {  # line number
+                    "word number": {  # word number
+                        "text": "SampleText",
+                        "confidence": 99,
+                        "bounding_box": {
+                            "left": 100,
+                            "top": 200,
+                            "width": 50,
+                            "height": 20
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+# Group elements by page > block > paragraph > line > word
+grouped = {}
 for i in range(len(word_data['text'])):
-    # Only include text with reasonable confidence
     if int(word_data['conf'][i]) > 60 and word_data['text'][i].strip():
+        page = str(word_data['page_num'][i])
+        block = str(word_data['block_num'][i])
+        para = str(word_data['par_num'][i])
+        line = str(word_data['line_num'][i])
+        word = str(word_data['word_num'][i])
         element = {
             "text": word_data['text'][i].strip(),
             "confidence": int(word_data['conf'][i]),
@@ -75,16 +115,15 @@ for i in range(len(word_data['text'])):
                 "top": int(word_data['top'][i]),
                 "width": int(word_data['width'][i]),
                 "height": int(word_data['height'][i])
-            },
-            "page_number": int(word_data['page_num'][i]),
-            "block_number": int(word_data['block_num'][i]),
-            "paragraph_number": int(word_data['par_num'][i]),
-            "line_number": int(word_data['line_num'][i]),
-            "word_number": int(word_data['word_num'][i])
+            }
         }
-        pdf_elements.append(element)
+        grouped.setdefault(page, {})
+        grouped[page].setdefault(block, {})
+        grouped[page][block].setdefault(para, {})
+        grouped[page][block][para].setdefault(line, {})
+        grouped[page][block][para][line][word] = element
 
-# Create final JSON structure
+
 result = {
     "source_file": file_path,
     "page_count": len(pdf_document),
@@ -93,12 +132,12 @@ result = {
         "width": base_img.shape[1],
         "height": base_img.shape[0]
     },
-    "total_elements": len(pdf_elements),
-    "elements": pdf_elements
+    "sample_object": sample_object,
+    "elements": grouped
 }
 
 # Break if no elements found
-if result["total_elements"] == 0:
+if not grouped:
     print("NOT VERIFIED!")
     pdf_document.close()
     sys.exit(0)

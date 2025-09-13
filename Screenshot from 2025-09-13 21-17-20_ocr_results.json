@@ -6,9 +6,10 @@
     "width": 2339,
     "height": 1653
   },
-  "total_elements": 3,
+  "total_elements": 4,
   "elements": [
     {
+      "type": "text",
       "text": "GOVT.",
       "confidence": 67,
       "bounding_box": {
@@ -24,6 +25,7 @@
       "word_number": 5
     },
     {
+      "type": "text",
       "text": "OF",
       "confidence": 72,
       "bounding_box": {
@@ -39,6 +41,7 @@
       "word_number": 6
     },
     {
+      "type": "text",
       "text": "ININA",
       "confidence": 62,
       "bounding_box": {
@@ -52,6 +55,14 @@
       "paragraph_number": 1,
       "line_number": 1,
       "word_number": 7
+    },
+    {
+      "type": "image",
+      "file": "image_1.jpeg",
+      "path": "/home/sai-ashish-mishra/Documents/shaastrahack/Screenshot from 2025-09-13 21-17-20_images/image_1.jpeg",
+      "bounding_box": null,
+      "xref": 4
     }
-  ]
+  ],
+  "image_dir": "/home/sai-ashish-mishra/Documents/shaastrahack/Screenshot from 2025-09-13 21-17-20_images"
 }
